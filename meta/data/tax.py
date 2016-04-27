@@ -91,10 +91,10 @@ class TaxTree ():
         '''
 
         if not parent2child_fname:
-            parent2child_fname = os.path.join(meta.__path__[0], 'ncbi_tax_tree')
+            parent2child_fname = os.path.join(meta.__path__[0], 'data', 'ncbi_tax_tree')
         self.load(parent2child_fname)
         if not tax_nodes_fname:
-            tax_nodes_fname = os.path.join(meta.__path__[0], 'taxid2namerank')
+            tax_nodes_fname = os.path.join(meta.__path__[0], 'data', 'taxid2namerank')
         self.load_taxonomy_data(tax_nodes_fname)
 
         #--------- RELEVANT TAXONOMY ASSIGNMENTS ----------#

@@ -3,10 +3,15 @@
 Metagenomix is a tool which enables you to download, analyze and visualize metagenomic data.
 
 ## Installation
-1. Clone this repository
-2. Change directory to pgnd-meta
-3. Run: `./setup-tax`
-4. Run: `python setup.py build install`
+Clone this repository and change to its directory. Then run:
+```bash
+# Download and setup NCBI taxonomy tree
+./setup-tax
+# Download and setup NCBI assembly summaries
+./setup-ncbi
+# Install the meta package
+python setup.py build install
+```
 
 After the installation you should have available the python package `meta`.
 

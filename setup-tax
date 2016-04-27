@@ -26,7 +26,7 @@ def main():
 	print 'Converting to metagenomix tree format...'
 	tax2rank = {}
 
-	outdir = '../meta/'
+	outdir = '../meta/data/'
 	nodes = 'nodes.dmp'
 	names = 'names.dmp'
 

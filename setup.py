@@ -14,7 +14,7 @@ setup(
     long_description = open('README.md').read(),
     packages = find_packages(),
     scripts = [],
-    package_data = {'meta': ['taxid2namerank', 'ncbi_tax_tree']},
+    package_data = {'meta.data': ['taxid2namerank', 'ncbi_tax_tree', 'NCBI.db']},
     data_files = [('', ['README.md'])],
     install_requires=requires,
     classifiers = [

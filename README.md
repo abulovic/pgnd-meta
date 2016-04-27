@@ -37,11 +37,15 @@ tt.get_org_name(tt.find_lca((1423, 562))) # returns Bacteria
 Using the `meta` package, you can download genome data from NCBI (using refseq or genbank).
 This can be done in two ways. First is to specify for which species or species subtree (including species children) you want to download genome data, by using the `ncbi-download tax` tool.
 If we want to download all the Escherichia coli (taxid: 562) subspecies from RefSeq and extract the genome files while downloading, we envoke:
-`ncbi-download tax refseq 562 ./output_dir --children --extract`
+```bash
+ncbi-download tax refseq 562 ./output_dir --children --extract
+```
 
 If you, however, want a custom list of genomes, there is a database at your disposal, creating by parsing the `assembly_summary_{genbank/refseq}.txt` files, in the `meta/data/NCBI.db` file. It is a `sqlite3` database, and can be acessed (for instance) by using a Firefox plugin: `https://addons.mozilla.org/en-US/firefox/addon/sqlite-manager/`.
 Here you can formulate any queries on the database, and put the resulting list of `ftp_path`s in a file, and invoke:
-`ncbi-download url url_list_file.txt ./output_dir`
+```bash
+ncbi-download url url_list_file.txt ./output_dir
+```
 
 ## The MIT Licence
 

@@ -16,6 +16,11 @@ setup(
     scripts = [],
     package_data = {'meta.data': ['taxid2namerank', 'ncbi_tax_tree', 'NCBI.db']},
     data_files = [('', ['README.md'])],
+    entry_points = {
+        'console_scripts': [
+            'ncbi-download = meta.data.NCBI:__download__'
+        ]
+    },
     install_requires=requires,
     classifiers = [
         'Development Status :: 3 - Alpha',

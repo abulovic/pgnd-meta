@@ -60,3 +60,7 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# metagenomix specific
+taxid2namerank
+ncbi_tax_tree

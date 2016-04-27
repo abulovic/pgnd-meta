@@ -1,0 +1,67 @@
+#! /usr/bin/env python
+import os
+import urllib
+import zipfile
+from contextlib import nested
+
+
+def main():
+
+	_tmp_dir = '_tmp_tax'
+	if not os.path.isdir(_tmp_dir):
+		os.mkdir(_tmp_dir)
+	os.chdir(_tmp_dir)
+
+	print 'Downloading taxdmp.zip...'
+	urllib.urlretrieve('ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdmp.zip', 'taxdmp.zip')
+	print 'DONE\n'
+
+	print 'Uncompressing data...'
+	with zipfile.ZipFile('taxdmp.zip') as zf:
+		zf.extract('nodes.dmp')
+		zf.extract('names.dmp')
+	print 'DONE\n'
+
+
+	print 'Converting to metagenomix tree format...'
+	tax2rank = {}
+
+	outdir = '../meta/'
+	nodes = 'nodes.dmp'
+	names = 'names.dmp'
+
+	fname = '%s%sncbi_tax_tree' % (outdir, os.path.sep)
+	with nested(open(nodes), open(fname, 'w')) as (fin, fout):
+		for line in fin:
+			data = line.split('|')
+			child = data[0].strip()
+			tax2rank[child] = data[2].strip()
+			parent = data[1].strip()
+			fout.write('%s %s\n' % (child, parent))
+
+	fname = '%s%staxid2namerank' % (outdir, os.path.sep)
+	last_tax = None
+	with nested(open(names), open(fname, 'w')) as (fin, fout):
+		for line in fin:
+			data = line.split('|')
+			tax = data[0].strip()
+			if tax == last_tax:
+				continue
+			name_type = data[3].strip()
+			if name_type == 'scientific name':
+				org_name = data[1].strip()
+				fout.write('%s|%s|%s\n' % (tax, org_name, tax2rank[tax]))
+				last_tax = tax
+	print 'DONE\n'
+
+	print 'Cleaning up...'
+	os.remove(names)
+	os.remove(nodes)
+	os.remove('taxdmp.zip')
+	os.chdir('..')
+	os.rmdir(_tmp_dir)
+	print 'DONE'
+
+
+if __name__ == '__main__':
+	main()

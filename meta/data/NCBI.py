@@ -7,6 +7,7 @@ from contextlib import nested
 from collections import OrderedDict
 
 import meta
+import meta.util as util
 from meta.util import timeit_msg, get_file_size
 from meta.data.tax import TaxTree
 
@@ -77,7 +78,30 @@ def setup_assembly_info(database):
 	_setup_db(database)
 	_cleanup(database)
 
-def download_urllist(url_file, outdir, extract):
+def download_urllist(url_file, outdir, extract, _format):
+
+	# if we want to format
+	
+	if _format:
+		_format = 'assembly_accession,' + _format
+		entries = _format.split(',')
+		ids = []
+		with open(url_file) as fin:
+			for line in fin:
+				_id = '_'.join(line.strip().split('/')[-1].split('_')[0:2])
+				ids.append(_id)
+		conn = util.get_ncbi_db_conn()
+		c = conn.cursor()
+		c.execute('SELECT {} FROM refseq WHERE assembly_accession IN ({})'.format(_format, ','.join(["'{}'".format(_id) for _id in ids])))
+		res = c.fetchall()
+		res = {e[0]: e[1:] for e in res}
+		c.execute('SELECT {} FROM genbank WHERE assembly_accession IN ({})'.format(_format, ','.join(["'{}'".format(_id) for _id in ids])))
+		res2 = c.fetchall()
+		res2 = {e[0]: e[1:] for e in res}
+		res.update(res2)
+		conn.close()
+		
+
 	line_cnt = 0
 	with open(url_file) as fin:
 		for line in fin:
@@ -92,6 +116,7 @@ def download_urllist(url_file, outdir, extract):
 		for idx, line in enumerate(fin, 1):
 			line = line.strip()
 			_id = line.split('/')[-1]
+			assembly_accession = '_'.join(_id.split('_')[0:2])
 			url = '{}/{}_genomic.fna.gz'.format(line, _id)
 			fname = '{}_genomic.fna.gz'.format(_id)
 			outfile = os.path.join(outdir, fname)
@@ -104,14 +129,17 @@ def download_urllist(url_file, outdir, extract):
 						        open(outfile[:-3], 'w')) as (gzin, txtout):
 						txtout.write(gzin.read())
 					os.remove(outfile)
+					if _format:
+						new_header = '|'.join(['{}|{}'.format(label, value) for label, value in zip(entries, [assembly_accession] + list(res[assembly_accession]))])
+						new_header = '>' + new_header
+						os.system("sed -i '1s/.*/{}/' {}".format(new_header, outfile[:-3]))
+						print new_header
 
-def download_taxid(database, taxid, outdir, download_children, extract):
+def download_taxid(database, taxid, outdir, download_children, extract, _format):
 	tt = TaxTree()
 	print 'Downloading {} data for organism {}...'.format(database, tt.get_org_name(taxid))
 
-	dbfile = os.path.join(meta.__path__[0], 'data', 'NCBI.db')
-	conn = sqlite3.connect(dbfile)
-	conn.text_factory = str
+	conn = util.get_ncbi_db_conn()
 	c = conn.cursor()
 
 	c.execute('SELECT taxid, ftp_path FROM {}'.format(database))
@@ -128,8 +156,10 @@ def download_taxid(database, taxid, outdir, download_children, extract):
 				fout.write(ftp_path)
 				fout.write('\n')
 	print 'Found {} entries matching the provided description.'.format(entries)
-	download_urllist(tmpfile, outdir, extract)
+	download_urllist(tmpfile, outdir, extract, _format)
 	os.remove(tmpfile)
+	conn.close()
+
 
 
 def _get_parser():
@@ -145,10 +175,12 @@ def _get_parser():
 	tax_pars.add_argument('outdir', help='Directory where to store downloaded files')
 	tax_pars.add_argument('--children', action='store_true', help='Download children of the specified taxid')
 	tax_pars.add_argument('--extract', action='store_true', help='Extract from .gz archive while downloading')
+	tax_pars.add_argument('--format', help='Reformat fasta header during download. Use keywords available in assembly summary files of NCBI. Example: --format taxid,organism_name With this option, you don\'t need to specify assembly_accession, because it will always be included in the 1st position.')
 
 	url_pars.add_argument('url_file', help='Path to textual file containing a newline-separated list of URLs of genomes to download')
 	url_pars.add_argument('outdir', help='Directory where to store downloaded files')
 	url_pars.add_argument('--extract', action='store_true', help='Extract from .gz archive while downloading')
+	url_pars.add_argument('--format', help='Reformat fasta header during download. Use keywords available in assembly summary files of NCBI. Example: --format taxid,organism_name With this option, you don\'t need to specify assembly_accession, because it will always be included in the 1st position.')
 
 	return parser
 
@@ -157,12 +189,11 @@ def __download__():
 	args = parser.parse_args()
 
 	if hasattr(args, 'taxid'):
-		download_taxid(args.db, int(args.taxid), args.outdir, args.children, args.extract)
+		download_taxid(args.db, int(args.taxid), args.outdir, args.children, args.extract, args.format)
 	else:
-		download_urllist(args.url_file, args.outdir, args.extract)
+		download_urllist(args.url_file, args.outdir, args.extract, args.format)
 
 
 if __name__ == '__main__':
 	setup_assembly_info('genbank')
 	setup_assembly_info('refseq')
-

@@ -2,27 +2,29 @@ import os
 import gzip
 import urllib
 import sqlite3
+from ftplib import FTP
 from contextlib import nested
 from collections import OrderedDict
 
 import meta
-from meta.util import timeit_msg
+from meta.util import timeit_msg, get_file_size
 from meta.data.tax import TaxTree
 
-ncbi_ftp = 'ftp://ftp.ncbi.nlm.nih.gov/genomes'
 
 def _download_asm(database):
 	assembly_file = 'assembly_summary_{}.txt'.format(database)
-	asm_link = '{}/{}/{}'.format(ncbi_ftp, database, assembly_file)
 
 	with timeit_msg('Downloading {}'.format(assembly_file)):
-		urllib.urlretrieve(asm_link, assembly_file)
+		ftp = FTP('ftp.ncbi.nlm.nih.gov')
+		ftp.login()
+		ftp.cwd('genomes/{}'.format(database))
+		ftp.retrbinary('RETR {}'.format(assembly_file), open(assembly_file, 'wb').write)
 		line_cnt = 0
 		with open(assembly_file) as fin:
 			for line in fin:
 				line_cnt += 1
 		fstats = os.stat(assembly_file)
-	print 'File size: {:1.3f} MB'.format(float(fstats.st_size)/2**20)
+	print 'File size: {}'.format(get_file_size(assembly_file))
 	print '# Lines  : {}'.format(line_cnt)
 
 def _setup_db(database):
@@ -101,6 +103,7 @@ def download_urllist(url_file, outdir, extract):
 					with nested(gzip.open(outfile, 'rb'),
 						        open(outfile[:-3], 'w')) as (gzin, txtout):
 						txtout.write(gzin.read())
+					os.remove(outfile)
 
 def download_taxid(database, taxid, outdir, download_children, extract):
 	tt = TaxTree()

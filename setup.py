@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 
-requires = []
+requires = ['BioPython']
 
 setup(
     name = 'metagenomix',
@@ -18,7 +18,8 @@ setup(
     data_files = [('', ['README.md'])],
     entry_points = {
         'console_scripts': [
-            'ncbi-download = meta.data.NCBI:__download__'
+            'ncbi-download = meta.data.NCBI:__download__',
+            'fq2fa = meta.io.seq:fq2fa'
         ]
     },
     install_requires=requires,

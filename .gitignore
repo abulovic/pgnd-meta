@@ -68,3 +68,6 @@ target/
 # metagenomix specific
 taxid2namerank
 ncbi_tax_tree
+
+# h5 files
+.h5
